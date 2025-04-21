@@ -1,0 +1,43 @@
+import seaborn as sns
+import pandas as pd
+
+df = sns.load_dataset('titanic')
+
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+print(df.info())
+print(df.describe())
+
+df['age'].fillna(df['age'].median(), inplace=True)
+df['embarked'].fillna(df['embarked'].mode()[0], inplace=True)
+df.drop(columns=['deck'], inplace=True)  # too many nulls
+
+sns.histplot(df['age'], kde=True)
+plt.title('Age Distribution')
+plt.savefig("results/age_distribution.png")
+plt.close()
+
+sns.countplot(data=df, x='survived')
+plt.title('Survival Count')
+plt.savefig("results/survival_count.png")
+plt.close()
+
+corr = df.select_dtypes(include=['number']).corr()
+sns.heatmap(corr, annot=True, cmap='coolwarm')
+plt.title('Correlation Heatmap')
+plt.savefig("results/correlation_heatmap.png")
+plt.close()
+
+sns.boxplot(x=df['fare'])
+plt.title('Fare Outliers')
+plt.savefig("results/fare_boxplot.png")
+plt.close()
+
+pip install ydata-profiling
+
+from ydata_profiling import ProfileReport
+
+profile = ProfileReport(df, title="Titanic EDA Report", explorative=True)
+profile.to_file("results/titanic_eda_report.html")
+

@@ -1,0 +1,58 @@
+import numpy as np
+import matplotlib.pyplot as plt
+import tensorflow as tf
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import LSTM, Dense, GRU
+from sklearn.preprocessing import MinMaxScaler
+
+np.random.seed(42)
+time_steps = np.arange(0, 100, 0.1)
+data = np.sin(0.2 * time_steps) + np.random.normal(0, 0.1, len(time_steps))  # Sinusoidal + noise
+
+plt.plot(time_steps, data)
+plt.title("Synthetic Weather-like Time Series")
+plt.xlabel("Time")
+plt.ylabel("Temperature")
+plt.show()
+
+scaler = MinMaxScaler()
+data_scaled = scaler.fit_transform(data.reshape(-1, 1))
+
+def create_sequences(data, seq_length):
+    X, y = [], []
+    for i in range(len(data) - seq_length):
+        X.append(data[i:i+seq_length])
+        y.append(data[i+seq_length])
+    return np.array(X), np.array(y)
+
+seq_length = 20
+X, y = create_sequences(data_scaled, seq_length)
+
+split = int(0.8 * len(X))
+X_train, X_test = X[:split], X[split:]
+y_train, y_test = y[:split], y[split:]
+
+model = Sequential([
+    LSTM(50, activation='relu', input_shape=(seq_length, 1)),
+    Dense(1)
+])
+
+
+model.compile(optimizer='adam', loss='mse')
+
+history = model.fit(X_train, y_train, epochs=20, validation_split=0.2, verbose=1)
+
+y_pred = model.predict(X_test)
+
+y_test_inv = scaler.inverse_transform(y_test)
+y_pred_inv = scaler.inverse_transform(y_pred)
+
+plt.figure(figsize=(10, 6))
+plt.plot(y_test_inv, label='True Temperature')
+plt.plot(y_pred_inv, label='Predicted Temperature')
+plt.title('Temperature Forecasting with LSTM')
+plt.xlabel('Time Steps')
+plt.ylabel('Temperature')
+plt.legend()
+plt.grid(True)
+plt.show()
